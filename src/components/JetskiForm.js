@@ -8,9 +8,10 @@ import {
   Column,
   Tile,
   IconButton,
+  InlineLoading,
 } from '@carbon/react';
 import { Add, TrashCan, Upload, ArrowLeft } from '@carbon/icons-react';
-import { saveJetski, generateId } from '../data/storage';
+import { createJetski, updateJetski, generateId } from '../data/storage';
 
 const emptyProprietario = () => ({
   id: generateId(),
@@ -26,7 +27,7 @@ const emptyForm = () => ({
   modelo: '',
   ano: '',
   cor: '',
-  imagemBase64: null,
+  imagemUrl: null,
   servicos: { quadriciclo: false, flutuante: false },
   proprietarios: [emptyProprietario()],
 });
@@ -38,7 +39,7 @@ function fromJetski(j) {
     modelo: j.modelo || '',
     ano: j.ano || '',
     cor: j.cor || '',
-    imagemBase64: j.imagemBase64 || null,
+    imagemUrl: j.imagemUrl || null,
     servicos: { ...j.servicos },
     proprietarios: j.proprietarios.map((p) => ({ ...p })),
   };
@@ -48,6 +49,10 @@ function JetskiForm({ jetski, onSave, onCancel }) {
   const isEdit = !!jetski;
   const [form, setForm] = useState(isEdit ? fromJetski(jetski) : emptyForm);
   const [errors, setErrors] = useState({});
+  // imageFile: File para upload, null para remover, undefined para manter
+  const [imageFile, setImageFile] = useState(undefined);
+  const [imagePreview, setImagePreview] = useState(isEdit ? jetski.imagemUrl : null);
+  const [saving, setSaving] = useState(false);
   const [notification, setNotification] = useState(null);
   const fileInputRef = useRef();
 
@@ -88,27 +93,29 @@ function JetskiForm({ jetski, onSave, onCancel }) {
     const file = e.target.files?.[0];
     if (!file) return;
     if (file.size > 5 * 1024 * 1024) {
-      setNotification({ kind: 'error', message: 'Imagem muito grande. Máximo 5MB.' });
+      setNotification({ kind: 'error', message: 'Imagem muito grande. M\u00e1ximo 5MB.' });
       return;
     }
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      setField('imagemBase64', ev.target.result);
-    };
-    reader.readAsDataURL(file);
+    setImageFile(file);
+    setImagePreview(URL.createObjectURL(file));
+  }
+
+  function handleRemoveImage() {
+    setImageFile(null);
+    setImagePreview(null);
   }
 
   function validate() {
     const errs = {};
-    if (!form.numeroInscricao.trim()) errs.numeroInscricao = 'Campo obrigatório';
-    if (!form.marca.trim()) errs.marca = 'Campo obrigatório';
+    if (!form.numeroInscricao.trim()) errs.numeroInscricao = 'Campo obrigat\u00f3rio';
+    if (!form.marca.trim()) errs.marca = 'Campo obrigat\u00f3rio';
     form.proprietarios.forEach((p, i) => {
-      if (!p.nome.trim()) errs[`prop_${i}_nome`] = 'Campo obrigatório';
+      if (!p.nome.trim()) errs[`prop_${i}_nome`] = 'Campo obrigat\u00f3rio';
     });
     return errs;
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
     const errs = validate();
     if (Object.keys(errs).length > 0) {
@@ -116,15 +123,33 @@ function JetskiForm({ jetski, onSave, onCancel }) {
       setNotification({ kind: 'error', message: 'Por favor, corrija os erros antes de salvar.' });
       return;
     }
-    const now = new Date().toISOString();
-    const saved = saveJetski({
-      id: jetski?.id || generateId(),
-      ...form,
-      dataCadastro: jetski?.dataCadastro || now,
-      dataAtualizacao: now,
-    });
-    setNotification({ kind: 'success', message: 'Jetski salvo com sucesso!' });
-    setTimeout(() => onSave(saved), 800);
+
+    setSaving(true);
+    try {
+      const dados = {
+        numeroInscricao: form.numeroInscricao,
+        marca: form.marca,
+        modelo: form.modelo,
+        ano: form.ano,
+        cor: form.cor,
+        servicos: form.servicos,
+        proprietarios: form.proprietarios,
+        imagemUrl: form.imagemUrl,
+      };
+
+      if (isEdit) {
+        await updateJetski(jetski.id, dados, imageFile);
+      } else {
+        await createJetski(dados, imageFile instanceof File ? imageFile : null);
+      }
+
+      setNotification({ kind: 'success', message: 'Jetski salvo com sucesso!' });
+      setTimeout(() => onSave(), 800);
+    } catch (err) {
+      console.error(err);
+      setNotification({ kind: 'error', message: 'Erro ao salvar. Verifique sua conex\u00e3o.' });
+      setSaving(false);
+    }
   }
 
   return (
@@ -137,6 +162,7 @@ function JetskiForm({ jetski, onSave, onCancel }) {
           iconDescription="Voltar"
           onClick={onCancel}
           style={{ padding: '0.375rem 0.75rem' }}
+          disabled={saving}
         >
           Voltar
         </Button>
@@ -164,12 +190,13 @@ function JetskiForm({ jetski, onSave, onCancel }) {
                 <Column lg={4} md={4} sm={4}>
                   <TextInput
                     id="numeroInscricao"
-                    labelText="Número de Inscrição *"
+                    labelText="N\u00famero de Inscri\u00e7\u00e3o *"
                     placeholder="Ex: AB-1234"
                     value={form.numeroInscricao}
                     onChange={(e) => setField('numeroInscricao', e.target.value)}
                     invalid={!!errors.numeroInscricao}
                     invalidText={errors.numeroInscricao}
+                    disabled={saving}
                   />
                 </Column>
                 <Column lg={4} md={4} sm={4}>
@@ -181,6 +208,7 @@ function JetskiForm({ jetski, onSave, onCancel }) {
                     onChange={(e) => setField('marca', e.target.value)}
                     invalid={!!errors.marca}
                     invalidText={errors.marca}
+                    disabled={saving}
                   />
                 </Column>
                 <Column lg={4} md={4} sm={4}>
@@ -190,6 +218,7 @@ function JetskiForm({ jetski, onSave, onCancel }) {
                     placeholder="Ex: WaveRunner FX"
                     value={form.modelo}
                     onChange={(e) => setField('modelo', e.target.value)}
+                    disabled={saving}
                   />
                 </Column>
                 <Column lg={2} md={2} sm={2}>
@@ -199,6 +228,7 @@ function JetskiForm({ jetski, onSave, onCancel }) {
                     placeholder="Ex: 2022"
                     value={form.ano}
                     onChange={(e) => setField('ano', e.target.value)}
+                    disabled={saving}
                   />
                 </Column>
                 <Column lg={4} md={4} sm={4}>
@@ -208,34 +238,38 @@ function JetskiForm({ jetski, onSave, onCancel }) {
                     placeholder="Ex: Azul e branco"
                     value={form.cor}
                     onChange={(e) => setField('cor', e.target.value)}
+                    disabled={saving}
                   />
                 </Column>
               </Grid>
 
-              <p className="form-section-title">Serviços Contratados</p>
+              <p className="form-section-title">Servi\u00e7os Contratados</p>
               <div style={{ display: 'flex', gap: '2rem' }}>
                 <Checkbox
                   id="servico-quadriciclo"
                   labelText="Quadriciclo"
                   checked={form.servicos.quadriciclo}
                   onChange={(_, { checked }) => setServico('quadriciclo', checked)}
+                  disabled={saving}
                 />
                 <Checkbox
                   id="servico-flutuante"
                   labelText="Flutuante"
                   checked={form.servicos.flutuante}
                   onChange={(_, { checked }) => setServico('flutuante', checked)}
+                  disabled={saving}
                 />
               </div>
 
-              <p className="form-section-title">Imagem do Jetski</p>
+              <p className="form-section-title">Foto do Jetski</p>
               <Button
                 kind="tertiary"
                 size="sm"
                 renderIcon={Upload}
                 onClick={() => fileInputRef.current?.click()}
+                disabled={saving}
               >
-                {form.imagemBase64 ? 'Trocar imagem' : 'Anexar imagem'}
+                {imagePreview ? 'Trocar foto' : 'Anexar foto'}
               </Button>
               <input
                 ref={fileInputRef}
@@ -244,14 +278,15 @@ function JetskiForm({ jetski, onSave, onCancel }) {
                 style={{ display: 'none' }}
                 onChange={handleImageChange}
               />
-              {form.imagemBase64 && (
+              {imagePreview && (
                 <div className="image-preview">
-                  <img src={form.imagemBase64} alt="Preview do jetski" />
+                  <img src={imagePreview} alt="Preview do jetski" />
                   <div style={{ padding: '0.5rem', display: 'flex', justifyContent: 'flex-end' }}>
                     <Button
                       kind="danger--ghost"
                       size="sm"
-                      onClick={() => setField('imagemBase64', null)}
+                      onClick={handleRemoveImage}
+                      disabled={saving}
                     >
                       Remover
                     </Button>
@@ -265,15 +300,16 @@ function JetskiForm({ jetski, onSave, onCancel }) {
             <Tile style={{ marginBottom: '1.5rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <p className="form-section-title" style={{ marginTop: 0, marginBottom: 0 }}>
-                  Proprietários
+                  Propriet\u00e1rios
                 </p>
                 <Button
                   kind="ghost"
                   size="sm"
                   renderIcon={Add}
                   onClick={addProprietario}
+                  disabled={saving}
                 >
-                  Adicionar proprietário
+                  Adicionar propriet\u00e1rio
                 </Button>
               </div>
 
@@ -305,14 +341,15 @@ function JetskiForm({ jetski, onSave, onCancel }) {
                         letterSpacing: '0.04em',
                       }}
                     >
-                      Proprietário {idx + 1}
+                      Propriet\u00e1rio {idx + 1}
                     </span>
                     {form.proprietarios.length > 1 && (
                       <IconButton
-                        label="Remover proprietário"
+                        label="Remover propriet\u00e1rio"
                         kind="ghost"
                         size="sm"
                         onClick={() => removeProprietario(idx)}
+                        disabled={saving}
                       >
                         <TrashCan />
                       </IconButton>
@@ -328,6 +365,7 @@ function JetskiForm({ jetski, onSave, onCancel }) {
                         onChange={(e) => setProprietario(idx, 'nome', e.target.value)}
                         invalid={!!errors[`prop_${idx}_nome`]}
                         invalidText={errors[`prop_${idx}_nome`]}
+                        disabled={saving}
                       />
                     </Column>
                     <Column lg={2} md={2} sm={4}>
@@ -337,6 +375,7 @@ function JetskiForm({ jetski, onSave, onCancel }) {
                         placeholder="Ex: 302"
                         value={p.apartamento}
                         onChange={(e) => setProprietario(idx, 'apartamento', e.target.value)}
+                        disabled={saving}
                       />
                     </Column>
                     <Column lg={4} md={2} sm={4}>
@@ -346,6 +385,7 @@ function JetskiForm({ jetski, onSave, onCancel }) {
                         placeholder="(61) 9 9999-9999"
                         value={p.telefone}
                         onChange={(e) => setProprietario(idx, 'telefone', e.target.value)}
+                        disabled={saving}
                       />
                     </Column>
                     <Column lg={6} md={4} sm={4}>
@@ -355,6 +395,7 @@ function JetskiForm({ jetski, onSave, onCancel }) {
                         placeholder="email@exemplo.com"
                         value={p.email}
                         onChange={(e) => setProprietario(idx, 'email', e.target.value)}
+                        disabled={saving}
                       />
                     </Column>
                   </Grid>
@@ -364,13 +405,17 @@ function JetskiForm({ jetski, onSave, onCancel }) {
           </Column>
 
           <Column lg={12} md={8} sm={4}>
-            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
-              <Button kind="secondary" onClick={onCancel}>
+            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end', alignItems: 'center' }}>
+              <Button kind="secondary" onClick={onCancel} disabled={saving}>
                 Cancelar
               </Button>
-              <Button type="submit">
-                {isEdit ? 'Salvar alterações' : 'Cadastrar jetski'}
-              </Button>
+              {saving ? (
+                <InlineLoading description="Salvando\u2026" status="active" />
+              ) : (
+                <Button type="submit">
+                  {isEdit ? 'Salvar altera\u00e7\u00f5es' : 'Cadastrar jetski'}
+                </Button>
+              )}
             </div>
           </Column>
         </Grid>

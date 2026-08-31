@@ -8,18 +8,24 @@ import {
   OverflowMenuItem,
   Modal,
   InlineNotification,
+  SkeletonText,
+  SkeletonPlaceholder,
 } from '@carbon/react';
 import { Add, Edit, SailboatCoastal, View } from '@carbon/icons-react';
 import { getAllJetskis, deleteJetski } from '../data/storage';
 
 function JetskiList({ onSelect, onEdit, onNew }) {
   const [jetskis, setJetskis] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleting, setDeleting] = useState(false);
   const [notification, setNotification] = useState(null);
 
   useEffect(() => {
-    setJetskis(getAllJetskis());
+    getAllJetskis()
+      .then(setJetskis)
+      .finally(() => setLoading(false));
   }, []);
 
   const filtered = jetskis.filter((j) => {
@@ -41,12 +47,19 @@ function JetskiList({ onSelect, onEdit, onNew }) {
     setDeleteTarget(id);
   }
 
-  function handleDelete() {
-    deleteJetski(deleteTarget);
-    setJetskis(getAllJetskis());
-    setDeleteTarget(null);
-    setNotification({ kind: 'success', message: 'Jetski excluído com sucesso.' });
-    setTimeout(() => setNotification(null), 3000);
+  async function handleDelete() {
+    setDeleting(true);
+    try {
+      await deleteJetski(deleteTarget);
+      setJetskis((prev) => prev.filter((j) => j.id !== deleteTarget));
+      setNotification({ kind: 'success', message: 'Jetski exclu\u00eddo com sucesso.' });
+      setTimeout(() => setNotification(null), 3000);
+    } catch {
+      setNotification({ kind: 'error', message: 'Erro ao excluir. Tente novamente.' });
+    } finally {
+      setDeleteTarget(null);
+      setDeleting(false);
+    }
   }
 
   return (
@@ -57,7 +70,7 @@ function JetskiList({ onSelect, onEdit, onNew }) {
             Jetskis Cadastrados
           </h1>
           <p style={{ margin: '0.25rem 0 0', color: '#6f6f6f', fontSize: '0.875rem' }}>
-            {jetskis.length} jetski{jetskis.length !== 1 ? 's' : ''} no total
+            {loading ? 'Carregando\u2026' : `${jetskis.length} jetski${jetskis.length !== 1 ? 's' : ''} no total`}
           </p>
         </div>
         <Button renderIcon={Add} onClick={onNew}>
@@ -76,13 +89,25 @@ function JetskiList({ onSelect, onEdit, onNew }) {
 
       <Search
         labelText="Buscar"
-        placeholder="Buscar por inscrição, marca, modelo ou proprietário…"
+        placeholder="Buscar por inscri\u00e7\u00e3o, marca, modelo ou propriet\u00e1rio\u2026"
         value={search}
         onChange={(e) => setSearch(e.target.value)}
         style={{ marginBottom: '1.5rem' }}
+        disabled={loading}
       />
 
-      {filtered.length === 0 ? (
+      {loading ? (
+        <div className="jetski-grid">
+          {[1, 2, 3].map((i) => (
+            <Tile key={i} style={{ padding: 0, overflow: 'hidden' }}>
+              <SkeletonPlaceholder style={{ width: '100%', height: '180px' }} />
+              <div style={{ padding: '1rem' }}>
+                <SkeletonText paragraph lines={3} />
+              </div>
+            </Tile>
+          ))}
+        </div>
+      ) : filtered.length === 0 ? (
         <div className="empty-state">
           <SailboatCoastal size={64} />
           <p style={{ fontSize: '1.125rem', fontWeight: 500, color: '#393939' }}>
@@ -111,13 +136,14 @@ function JetskiList({ onSelect, onEdit, onNew }) {
       <Modal
         open={!!deleteTarget}
         danger
-        modalHeading="Confirmar exclusão"
-        primaryButtonText="Excluir"
+        modalHeading="Confirmar exclus\u00e3o"
+        primaryButtonText={deleting ? 'Excluindo\u2026' : 'Excluir'}
         secondaryButtonText="Cancelar"
         onRequestSubmit={handleDelete}
-        onRequestClose={() => setDeleteTarget(null)}
+        onRequestClose={() => !deleting && setDeleteTarget(null)}
+        primaryButtonDisabled={deleting}
       >
-        <p>Tem certeza que deseja excluir este jetski? Esta ação não pode ser desfeita.</p>
+        <p>Tem certeza que deseja excluir este jetski? Esta a\u00e7\u00e3o n\u00e3o pode ser desfeita.</p>
       </Modal>
     </div>
   );
@@ -126,15 +152,15 @@ function JetskiList({ onSelect, onEdit, onNew }) {
 function JetskiCard({ jetski, onView, onEdit, onDelete }) {
   return (
     <Tile style={{ padding: 0, overflow: 'hidden', position: 'relative' }}>
-      {jetski.imagemBase64 ? (
+      {jetski.imagemUrl ? (
         <img
           className="jetski-card-img"
-          src={jetski.imagemBase64}
+          src={jetski.imagemUrl}
           alt={`Jetski ${jetski.numeroInscricao}`}
         />
       ) : (
         <div className="jetski-card-img-placeholder">
-          <span>Sem imagem</span>
+          <span>Sem foto</span>
         </div>
       )}
 
@@ -156,7 +182,7 @@ function JetskiCard({ jetski, onView, onEdit, onDelete }) {
                 letterSpacing: '0.04em',
               }}
             >
-              Nº Inscrição
+              N\u00ba Inscri\u00e7\u00e3o
             </p>
             <p
               style={{
@@ -166,13 +192,13 @@ function JetskiCard({ jetski, onView, onEdit, onDelete }) {
                 color: '#161616',
               }}
             >
-              {jetski.numeroInscricao || '—'}
+              {jetski.numeroInscricao || '\u2014'}
             </p>
             <p style={{ margin: 0, color: '#393939', fontSize: '0.9375rem' }}>
-              {[jetski.marca, jetski.modelo, jetski.ano].filter(Boolean).join(' · ')}
+              {[jetski.marca, jetski.modelo, jetski.ano].filter(Boolean).join(' \u00b7 ')}
             </p>
           </div>
-          <OverflowMenu flipped aria-label="Ações">
+          <OverflowMenu flipped aria-label="A\u00e7\u00f5es">
             <OverflowMenuItem itemText="Visualizar" onClick={onView} />
             <OverflowMenuItem itemText="Editar" onClick={onEdit} />
             <OverflowMenuItem
@@ -192,17 +218,17 @@ function JetskiCard({ jetski, onView, onEdit, onDelete }) {
             <Tag type="teal" size="sm">Flutuante</Tag>
           )}
           {!jetski.servicos?.quadriciclo && !jetski.servicos?.flutuante && (
-            <Tag type="gray" size="sm">Sem serviço</Tag>
+            <Tag type="gray" size="sm">Sem servi\u00e7o</Tag>
           )}
         </div>
 
         <div style={{ marginTop: '0.75rem', borderTop: '1px solid #e0e0e0', paddingTop: '0.75rem' }}>
           <p style={{ margin: '0 0 0.25rem', fontSize: '0.75rem', color: '#6f6f6f', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-            Proprietário{jetski.proprietarios?.length !== 1 ? 's' : ''}
+            Propriet\u00e1rio{jetski.proprietarios?.length !== 1 ? 's' : ''}
           </p>
           {jetski.proprietarios?.slice(0, 2).map((p) => (
             <p key={p.id} style={{ margin: '0.125rem 0', fontSize: '0.875rem', color: '#393939' }}>
-              {p.nome} {p.apartamento ? `· Apto ${p.apartamento}` : ''}
+              {p.nome} {p.apartamento ? `\u00b7 Apto ${p.apartamento}` : ''}
             </p>
           ))}
           {jetski.proprietarios?.length > 2 && (
@@ -213,20 +239,10 @@ function JetskiCard({ jetski, onView, onEdit, onDelete }) {
         </div>
 
         <div style={{ marginTop: '0.75rem', display: 'flex', gap: '0.5rem' }}>
-          <Button
-            kind="ghost"
-            size="sm"
-            renderIcon={View}
-            onClick={onView}
-          >
+          <Button kind="ghost" size="sm" renderIcon={View} onClick={onView}>
             Ver detalhes
           </Button>
-          <Button
-            kind="ghost"
-            size="sm"
-            renderIcon={Edit}
-            onClick={onEdit}
-          >
+          <Button kind="ghost" size="sm" renderIcon={Edit} onClick={onEdit}>
             Editar
           </Button>
         </div>
