@@ -1,2 +1,2 @@
 # cadastro-marina-ilhasdolago
-Cadastro para embarcações no Ilhas do Lago
+Formulário para cadastro das embarcações no Ilhas do Lago
