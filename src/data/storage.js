@@ -31,6 +31,7 @@ import {
   orderBy,
   query,
   serverTimestamp,
+  onSnapshot,
 } from 'firebase/firestore';
 import {
   ref,
@@ -48,6 +49,21 @@ export async function getAllJetskis() {
   const q = query(collection(db, COL), orderBy('dataCadastro', 'desc'));
   const snap = await getDocs(q);
   return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+}
+
+/**
+ * Subscription em tempo real com cache offline automático.
+ * Retorna a função de cancelamento (unsubscribe).
+ * - onData(jetskis[]) — chamada imediatamente com dados do cache, depois com servidor
+ * - onError(err)      — chamada se a query falhar
+ */
+export function subscribeJetskis(onData, onError) {
+  const q = query(collection(db, COL), orderBy('dataCadastro', 'desc'));
+  return onSnapshot(
+    q,
+    (snap) => onData(snap.docs.map((d) => ({ id: d.id, ...d.data() }))),
+    onError
+  );
 }
 
 export async function getJetskiById(id) {

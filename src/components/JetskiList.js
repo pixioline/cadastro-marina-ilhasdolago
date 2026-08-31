@@ -12,7 +12,7 @@ import {
   SkeletonPlaceholder,
 } from '@carbon/react';
 import { Add, Edit, SailboatCoastal, View } from '@carbon/icons-react';
-import { getAllJetskis, deleteJetski } from '../data/storage';
+import { subscribeJetskis, deleteJetski } from '../data/storage';
 
 function JetskiList({ onSelect, onEdit, onNew }) {
   const [jetskis, setJetskis] = useState([]);
@@ -23,12 +23,19 @@ function JetskiList({ onSelect, onEdit, onNew }) {
   const [notification, setNotification] = useState(null);
 
   useEffect(() => {
-    getAllJetskis()
-      .then(setJetskis)
-      .catch(() =>
-        setNotification({ kind: 'error', message: 'Erro ao carregar dados. Verifique sua conexão com o Firebase.' })
-      )
-      .finally(() => setLoading(false));
+    // onSnapshot: dispara imediatamente com dados do cache (IndexedDB),
+    // depois atualiza quando o servidor responde — sem esperar pela rede
+    const unsubscribe = subscribeJetskis(
+      (data) => {
+        setJetskis(data);
+        setLoading(false);
+      },
+      () => {
+        setNotification({ kind: 'error', message: 'Erro ao carregar dados. Verifique sua conexão com o Firebase.' });
+        setLoading(false);
+      }
+    );
+    return unsubscribe; // cancela a subscription ao desmontar o componente
   }, []);
 
   const filtered = jetskis.filter((j) => {

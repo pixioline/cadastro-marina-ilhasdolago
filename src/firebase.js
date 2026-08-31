@@ -1,8 +1,7 @@
 import { initializeApp } from 'firebase/app';
-import { getFirestore } from 'firebase/firestore';
+import { getFirestore, enableIndexedDbPersistence } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 
-// Variáveis de ambiente definidas no arquivo .env (nunca commitar o .env com valores reais)
 const firebaseConfig = {
   apiKey:            process.env.REACT_APP_FIREBASE_API_KEY,
   authDomain:        process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
@@ -16,3 +15,13 @@ const app = initializeApp(firebaseConfig);
 
 export const db      = getFirestore(app);
 export const storage = getStorage(app);
+
+// Persistência offline: na segunda visita a lista carrega do IndexedDB do browser
+// antes mesmo da resposta do servidor (~100ms vs ~2s)
+enableIndexedDbPersistence(db).catch((err) => {
+  // 'failed-precondition': múltiplas abas abertas — persiste só na primeira
+  // 'unimplemented': browser não suporta IndexedDB (Safari antigo)
+  if (err.code !== 'failed-precondition' && err.code !== 'unimplemented') {
+    console.warn('Firestore offline persistence unavailable:', err.code);
+  }
+});

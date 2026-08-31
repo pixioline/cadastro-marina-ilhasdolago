@@ -1,0 +1,34 @@
+// Carbon Design System — imports seletivos
+// Carrega apenas os componentes usados no projeto (~150 KB vs 925 KB do styles.css completo)
+
+// 1. Tokens base obrigatórios (reset, cores, tipografia, espaçamento, temas)
+@use '@carbon/styles/scss/reset';
+@use '@carbon/styles/scss/theme';
+@use '@carbon/styles/scss/type';
+@use '@carbon/styles/scss/spacing';
+@use '@carbon/styles/scss/motion';
+@use '@carbon/styles/scss/layer';
+@use '@carbon/styles/scss/zone';
+
+// 2. Grid
+@use '@carbon/styles/scss/grid';
+
+// 3. Fontes IBM Plex
+@use '@carbon/styles/scss/fonts';
+
+// 4. Componentes Carbon usados no projeto
+@use '@carbon/styles/scss/components/button';
+@use '@carbon/styles/scss/components/tile';
+@use '@carbon/styles/scss/components/search';
+@use '@carbon/styles/scss/components/text-input';
+@use '@carbon/styles/scss/components/checkbox';
+@use '@carbon/styles/scss/components/modal';
+@use '@carbon/styles/scss/components/notification';
+@use '@carbon/styles/scss/components/overflow-menu';
+@use '@carbon/styles/scss/components/tag';
+@use '@carbon/styles/scss/components/inline-loading';
+@use '@carbon/styles/scss/components/skeleton-styles';
+@use '@carbon/styles/scss/components/ui-shell';
+
+// 5. Utilitários Carbon usados
+@use '@carbon/styles/scss/utilities';
