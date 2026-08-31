@@ -93,24 +93,31 @@ function JetskiForm({ jetski, onSave, onCancel }) {
     const file = e.target.files?.[0];
     if (!file) return;
     if (file.size > 5 * 1024 * 1024) {
-      setNotification({ kind: 'error', message: 'Imagem muito grande. M\u00e1ximo 5MB.' });
+      setNotification({ kind: 'error', message: 'Imagem muito grande. Máximo 5MB.' });
       return;
     }
+    // Revoga a URL anterior antes de criar uma nova (evita memory leak)
+    setImagePreview((prev) => {
+      if (prev && prev.startsWith('blob:')) URL.revokeObjectURL(prev);
+      return URL.createObjectURL(file);
+    });
     setImageFile(file);
-    setImagePreview(URL.createObjectURL(file));
   }
 
   function handleRemoveImage() {
-    setImageFile(null);
-    setImagePreview(null);
+    setImagePreview((prev) => {
+      if (prev && prev.startsWith('blob:')) URL.revokeObjectURL(prev);
+      return null;
+    });
+    setImageFile(null); // sinaliza para deletar no Storage
   }
 
   function validate() {
     const errs = {};
-    if (!form.numeroInscricao.trim()) errs.numeroInscricao = 'Campo obrigat\u00f3rio';
-    if (!form.marca.trim()) errs.marca = 'Campo obrigat\u00f3rio';
+    if (!form.numeroInscricao.trim()) errs.numeroInscricao = 'Campo obrigatório';
+    if (!form.marca.trim()) errs.marca = 'Campo obrigatório';
     form.proprietarios.forEach((p, i) => {
-      if (!p.nome.trim()) errs[`prop_${i}_nome`] = 'Campo obrigat\u00f3rio';
+      if (!p.nome.trim()) errs[`prop_${i}_nome`] = 'Campo obrigatório';
     });
     return errs;
   }
@@ -126,6 +133,7 @@ function JetskiForm({ jetski, onSave, onCancel }) {
 
     setSaving(true);
     try {
+      // imagemUrl é gerenciado pelo storage.js com base em imageFile — não inclui aqui
       const dados = {
         numeroInscricao: form.numeroInscricao,
         marca: form.marca,
@@ -134,7 +142,7 @@ function JetskiForm({ jetski, onSave, onCancel }) {
         cor: form.cor,
         servicos: form.servicos,
         proprietarios: form.proprietarios,
-        imagemUrl: form.imagemUrl,
+        imagemUrl: form.imagemUrl, // passado para updateJetski poder manter a URL atual
       };
 
       if (isEdit) {
@@ -147,7 +155,7 @@ function JetskiForm({ jetski, onSave, onCancel }) {
       setTimeout(() => onSave(), 800);
     } catch (err) {
       console.error(err);
-      setNotification({ kind: 'error', message: 'Erro ao salvar. Verifique sua conex\u00e3o.' });
+      setNotification({ kind: 'error', message: 'Erro ao salvar. Verifique sua conexão.' });
       setSaving(false);
     }
   }
@@ -190,7 +198,7 @@ function JetskiForm({ jetski, onSave, onCancel }) {
                 <Column lg={4} md={4} sm={4}>
                   <TextInput
                     id="numeroInscricao"
-                    labelText="N\u00famero de Inscri\u00e7\u00e3o *"
+                    labelText="Número de Inscrição *"
                     placeholder="Ex: AB-1234"
                     value={form.numeroInscricao}
                     onChange={(e) => setField('numeroInscricao', e.target.value)}
@@ -243,7 +251,7 @@ function JetskiForm({ jetski, onSave, onCancel }) {
                 </Column>
               </Grid>
 
-              <p className="form-section-title">Servi\u00e7os Contratados</p>
+              <p className="form-section-title">Serviços Contratados</p>
               <div style={{ display: 'flex', gap: '2rem' }}>
                 <Checkbox
                   id="servico-quadriciclo"
@@ -300,7 +308,7 @@ function JetskiForm({ jetski, onSave, onCancel }) {
             <Tile style={{ marginBottom: '1.5rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <p className="form-section-title" style={{ marginTop: 0, marginBottom: 0 }}>
-                  Propriet\u00e1rios
+                  Proprietários
                 </p>
                 <Button
                   kind="ghost"
@@ -309,7 +317,7 @@ function JetskiForm({ jetski, onSave, onCancel }) {
                   onClick={addProprietario}
                   disabled={saving}
                 >
-                  Adicionar propriet\u00e1rio
+                  Adicionar proprietário
                 </Button>
               </div>
 
@@ -341,11 +349,11 @@ function JetskiForm({ jetski, onSave, onCancel }) {
                         letterSpacing: '0.04em',
                       }}
                     >
-                      Propriet\u00e1rio {idx + 1}
+                      Proprietário {idx + 1}
                     </span>
                     {form.proprietarios.length > 1 && (
                       <IconButton
-                        label="Remover propriet\u00e1rio"
+                        label="Remover proprietário"
                         kind="ghost"
                         size="sm"
                         onClick={() => removeProprietario(idx)}
@@ -410,10 +418,10 @@ function JetskiForm({ jetski, onSave, onCancel }) {
                 Cancelar
               </Button>
               {saving ? (
-                <InlineLoading description="Salvando\u2026" status="active" />
+                <InlineLoading description="Salvando…" status="active" />
               ) : (
                 <Button type="submit">
-                  {isEdit ? 'Salvar altera\u00e7\u00f5es' : 'Cadastrar jetski'}
+                  {isEdit ? 'Salvar alterações' : 'Cadastrar jetski'}
                 </Button>
               )}
             </div>

@@ -25,6 +25,9 @@ function JetskiList({ onSelect, onEdit, onNew }) {
   useEffect(() => {
     getAllJetskis()
       .then(setJetskis)
+      .catch(() =>
+        setNotification({ kind: 'error', message: 'Erro ao carregar dados. Verifique sua conexão com o Firebase.' })
+      )
       .finally(() => setLoading(false));
   }, []);
 
@@ -52,7 +55,7 @@ function JetskiList({ onSelect, onEdit, onNew }) {
     try {
       await deleteJetski(deleteTarget);
       setJetskis((prev) => prev.filter((j) => j.id !== deleteTarget));
-      setNotification({ kind: 'success', message: 'Jetski exclu\u00eddo com sucesso.' });
+      setNotification({ kind: 'success', message: 'Jetski excluído com sucesso.' });
       setTimeout(() => setNotification(null), 3000);
     } catch {
       setNotification({ kind: 'error', message: 'Erro ao excluir. Tente novamente.' });
@@ -70,7 +73,7 @@ function JetskiList({ onSelect, onEdit, onNew }) {
             Jetskis Cadastrados
           </h1>
           <p style={{ margin: '0.25rem 0 0', color: '#6f6f6f', fontSize: '0.875rem' }}>
-            {loading ? 'Carregando\u2026' : `${jetskis.length} jetski${jetskis.length !== 1 ? 's' : ''} no total`}
+            {loading ? 'Carregando…' : `${jetskis.length} jetski${jetskis.length !== 1 ? 's' : ''} no total`}
           </p>
         </div>
         <Button renderIcon={Add} onClick={onNew}>
@@ -89,7 +92,7 @@ function JetskiList({ onSelect, onEdit, onNew }) {
 
       <Search
         labelText="Buscar"
-        placeholder="Buscar por inscri\u00e7\u00e3o, marca, modelo ou propriet\u00e1rio\u2026"
+        placeholder="Buscar por inscrição, marca, modelo ou proprietário…"
         value={search}
         onChange={(e) => setSearch(e.target.value)}
         style={{ marginBottom: '1.5rem' }}
@@ -136,14 +139,14 @@ function JetskiList({ onSelect, onEdit, onNew }) {
       <Modal
         open={!!deleteTarget}
         danger
-        modalHeading="Confirmar exclus\u00e3o"
-        primaryButtonText={deleting ? 'Excluindo\u2026' : 'Excluir'}
+        modalHeading="Confirmar exclusão"
+        primaryButtonText={deleting ? 'Excluindo…' : 'Excluir'}
         secondaryButtonText="Cancelar"
         onRequestSubmit={handleDelete}
         onRequestClose={() => !deleting && setDeleteTarget(null)}
         primaryButtonDisabled={deleting}
       >
-        <p>Tem certeza que deseja excluir este jetski? Esta a\u00e7\u00e3o n\u00e3o pode ser desfeita.</p>
+        <p>Tem certeza que deseja excluir este jetski? Esta ação não pode ser desfeita.</p>
       </Modal>
     </div>
   );
@@ -182,7 +185,7 @@ function JetskiCard({ jetski, onView, onEdit, onDelete }) {
                 letterSpacing: '0.04em',
               }}
             >
-              N\u00ba Inscri\u00e7\u00e3o
+              Nº Inscrição
             </p>
             <p
               style={{
@@ -192,13 +195,13 @@ function JetskiCard({ jetski, onView, onEdit, onDelete }) {
                 color: '#161616',
               }}
             >
-              {jetski.numeroInscricao || '\u2014'}
+              {jetski.numeroInscricao || '—'}
             </p>
             <p style={{ margin: 0, color: '#393939', fontSize: '0.9375rem' }}>
-              {[jetski.marca, jetski.modelo, jetski.ano].filter(Boolean).join(' \u00b7 ')}
+              {[jetski.marca, jetski.modelo, jetski.ano].filter(Boolean).join(' · ')}
             </p>
           </div>
-          <OverflowMenu flipped aria-label="A\u00e7\u00f5es">
+          <OverflowMenu flipped aria-label="Ações">
             <OverflowMenuItem itemText="Visualizar" onClick={onView} />
             <OverflowMenuItem itemText="Editar" onClick={onEdit} />
             <OverflowMenuItem
@@ -218,17 +221,17 @@ function JetskiCard({ jetski, onView, onEdit, onDelete }) {
             <Tag type="teal" size="sm">Flutuante</Tag>
           )}
           {!jetski.servicos?.quadriciclo && !jetski.servicos?.flutuante && (
-            <Tag type="gray" size="sm">Sem servi\u00e7o</Tag>
+            <Tag type="gray" size="sm">Sem serviço</Tag>
           )}
         </div>
 
         <div style={{ marginTop: '0.75rem', borderTop: '1px solid #e0e0e0', paddingTop: '0.75rem' }}>
           <p style={{ margin: '0 0 0.25rem', fontSize: '0.75rem', color: '#6f6f6f', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-            Propriet\u00e1rio{jetski.proprietarios?.length !== 1 ? 's' : ''}
+            Proprietário{jetski.proprietarios?.length !== 1 ? 's' : ''}
           </p>
           {jetski.proprietarios?.slice(0, 2).map((p) => (
             <p key={p.id} style={{ margin: '0.125rem 0', fontSize: '0.875rem', color: '#393939' }}>
-              {p.nome} {p.apartamento ? `\u00b7 Apto ${p.apartamento}` : ''}
+              {p.nome} {p.apartamento ? `· Apto ${p.apartamento}` : ''}
             </p>
           ))}
           {jetski.proprietarios?.length > 2 && (
