@@ -2,6 +2,7 @@
   "name": "cadastro-marina-ilhasdolago",
   "version": "0.1.0",
   "private": true,
+  "homepage": "https://pixioline.github.io/cadastro-marina-ilhasdolago",
   "dependencies": {
     "@carbon/icons-react": "^11.87.0",
     "@carbon/react": "^1.115.0",
@@ -19,7 +20,9 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d build"
   },
   "eslintConfig": {
     "extends": [
@@ -38,5 +41,8 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "gh-pages": "^6.3.0"
   }
 }
