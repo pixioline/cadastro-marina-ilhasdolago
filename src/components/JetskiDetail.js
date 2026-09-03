@@ -37,7 +37,13 @@ export default function JetskiDetail({ id, onEdit, onBack }) {
           <p style={{ margin: 0, color: '#6f6f6f', fontSize: '0.875rem' }}>Detalhes do cadastro</p>
         </div>
         {!loading && jetski && (
-          <Button kind="primary" renderIcon={Edit} onClick={() => onEdit(jetski)} style={{ marginLeft: 'auto' }}>Editar</Button>
+          <Button
+            kind="primary"
+            onClick={() => onEdit(jetski)}
+            style={{ marginLeft: 'auto', display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}
+          >
+            <Edit size={16} /> Editar
+          </Button>
         )}
       </div>
 
@@ -51,16 +57,20 @@ export default function JetskiDetail({ id, onEdit, onBack }) {
       ) : jetski ? (
         <>
           {jetski.imagemUrl && (
-            <img src={jetski.imagemUrl} alt={`Jetski ${jetski.numeroInscricao}`} style={{ width: '100%', maxHeight: '320px', objectFit: 'cover', display: 'block', marginBottom: '1.5rem', border: '1px solid #e0e0e0' }} />
+            <img
+              src={jetski.imagemUrl}
+              alt={`Jetski ${jetski.numeroInscricao}`}
+              style={{ width: '100%', maxHeight: '320px', objectFit: 'cover', display: 'block', marginBottom: '1.5rem', border: '1px solid #e0e0e0' }}
+            />
           )}
           <Tile style={{ marginBottom: '1rem' }}>
             <p className="form-section-title">Identificação</p>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-              <Field label="Nº Inscrição" value={jetski.numeroInscricao} />
-              <Field label="Marca"        value={jetski.marca} />
-              <Field label="Modelo"       value={jetski.modelo} />
-              <Field label="Ano"          value={jetski.ano} />
-              <Field label="Cor"          value={jetski.cor} />
+              <Field label="Nº Inscrição"  value={jetski.numeroInscricao} />
+              <Field label="Marca"         value={jetski.marca} />
+              <Field label="Modelo"        value={jetski.modelo} />
+              <Field label="Ano"           value={jetski.ano} />
+              <Field label="Cor"           value={jetski.cor} />
             </div>
           </Tile>
           <Tile style={{ marginBottom: '1rem' }}>
@@ -68,11 +78,15 @@ export default function JetskiDetail({ id, onEdit, onBack }) {
             <div className="tag-row" style={{ marginTop: 0 }}>
               {jetski.servicos?.quadriciclo && <Tag type="blue" size="md">Quadriciclo</Tag>}
               {jetski.servicos?.flutuante   && <Tag type="teal" size="md">Pier Flutuante</Tag>}
-              {!jetski.servicos?.quadriciclo && !jetski.servicos?.flutuante && <Tag type="gray" size="md">Nenhum serviço</Tag>}
+              {!jetski.servicos?.quadriciclo && !jetski.servicos?.flutuante && (
+                <Tag type="gray" size="md">Nenhum serviço</Tag>
+              )}
             </div>
           </Tile>
           <Tile style={{ marginBottom: '1rem' }}>
-            <p className="form-section-title">Proprietário{jetski.proprietarios?.length !== 1 ? 's' : ''} ({jetski.proprietarios?.length || 0})</p>
+            <p className="form-section-title">
+              Proprietário{jetski.proprietarios?.length !== 1 ? 's' : ''} ({jetski.proprietarios?.length || 0})
+            </p>
             {jetski.proprietarios?.map((p, idx) => (
               <div key={p.id} style={{ marginBottom: idx < jetski.proprietarios.length - 1 ? '1rem' : 0, paddingBottom: idx < jetski.proprietarios.length - 1 ? '1rem' : 0, borderBottom: idx < jetski.proprietarios.length - 1 ? '1px solid #e0e0e0' : 'none' }}>
                 <p style={{ margin: '0 0 0.5rem', fontWeight: 600, color: '#161616' }}>{p.nome || '—'}</p>
@@ -101,8 +115,8 @@ export default function JetskiDetail({ id, onEdit, onBack }) {
           <Tile>
             <p className="form-section-title">Registro</p>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-              <Field label="Cadastrado em" value={formatTs(jetski.dataCadastro)} />
-              <Field label="Atualizado em" value={formatTs(jetski.dataAtualizacao)} />
+              <Field label="Cadastrado em"   value={formatTs(jetski.dataCadastro)} />
+              <Field label="Atualizado em"   value={formatTs(jetski.dataAtualizacao)} />
             </div>
           </Tile>
         </>
