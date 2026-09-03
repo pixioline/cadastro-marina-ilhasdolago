@@ -26,51 +26,14 @@
     "deploy": "gh-pages -d build -r https://github.com/pixioline/cadastro-marina-ilhasdolago.git"
   },
   "eslintConfig": {
-    "extends": [
-      "react-app",
-      "react-app/jest"
-    ]
+    "extends": ["react-app", "react-app/jest"]
   },
   "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
+    "production": [">0.2%", "not dead", "not op_mini all"],
+    "development": ["last 1 chrome version", "last 1 firefox version", "last 1 safari version"]
   },
   "devDependencies": {
     "gh-pages": "^6.3.0",
     "sass": "^1.103.1"
-  },
-  "allowScripts": {
-    "protobufjs@7.6.6": true,
-    "@carbon/feature-flags@1.8.0": true,
-    "@carbon/icon-helpers@10.81.0": true,
-    "@carbon/icons-react@11.87.0": true,
-    "@carbon/grid@11.61.0": true,
-    "@carbon/layout@11.58.0": true,
-    "@carbon/themes@11.80.0": true,
-    "@carbon/motion@11.51.0": true,
-    "@carbon/colors@11.57.0": true,
-    "@carbon/styles@1.114.0": true,
-    "@carbon/react@1.115.0": true,
-    "@carbon/utilities@0.25.0": true,
-    "@carbon/type@11.66.0": true,
-    "@firebase/util@1.15.3": true,
-    "@ibm/plex-mono@2.5.0": true,
-    "@ibm/plex-sans@1.1.0": true,
-    "@ibm/plex@6.4.1": true,
-    "@ibm/plex-sans-arabic@1.1.0": true,
-    "@ibm/plex-sans-devanagari@1.1.0": true,
-    "@ibm/plex-sans-hebrew@1.1.0": true,
-    "@ibm/plex-sans-thai-looped@1.1.0": true,
-    "@ibm/plex-sans-thai@1.1.0": true,
-    "@ibm/plex-serif@2.0.0": true,
-    "@parcel/watcher@2.6.0": true
   }
 }

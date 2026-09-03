@@ -16,11 +16,7 @@ const app = initializeApp(firebaseConfig);
 export const db      = getFirestore(app);
 export const storage = getStorage(app);
 
-// Persistência offline: na segunda visita a lista carrega do IndexedDB do browser
-// antes mesmo da resposta do servidor (~100ms vs ~2s)
 enableIndexedDbPersistence(db).catch((err) => {
-  // 'failed-precondition': múltiplas abas abertas — persiste só na primeira
-  // 'unimplemented': browser não suporta IndexedDB (Safari antigo)
   if (err.code !== 'failed-precondition' && err.code !== 'unimplemented') {
     console.warn('Firestore offline persistence unavailable:', err.code);
   }

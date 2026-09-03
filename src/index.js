@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import './carbon.scss'; // Carbon seletivo (~150 KB vs 925 KB do styles.css completo)
+import './carbon.scss';
 import './index.css';
 import App from './App';
 
